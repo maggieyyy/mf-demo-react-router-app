@@ -1,50 +1,40 @@
-# React + TypeScript + Vite
+# mf-demo-react-router-app
+测试APIPark插件系统的demo项目
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 部署
 
-Currently, two official plugins are available:
+``` 
+npm install
+npm run build
+``` 
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 本地运行基座项目，配置插件，并启用Nginx
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
 ```
+server {
+        listen       5050;
+        server_name  localhost;
+        #charset koi8-r;
+        #access_log  logs/host.access.log  main;
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+        location /plugin-frontend/remote/ {
+            alias ${path}/react-router-app/dist/assets/;
+            # 使用 rewrite 去除 ?import 查询参数
+            rewrite ^/frontend-plugin/remote/(.*)\?import$ /frontend-plugin/remote/$1 break;
+            index apipark.js;
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+            # 添加 CORS 头信息
+            add_header Access-Control-Allow-Origin *;
+            add_header Access-Control-Allow-Methods 'GET, POST, OPTIONS';
+            add_header Access-Control-Allow-Headers 'DNT,X-Mx-ReqToken,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization';
+        }
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+        location / {
+            proxy_pass http://localhost:5000;
+            proxy_set_header Host $proxy_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+    ...
+    }
 ```
